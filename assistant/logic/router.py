@@ -1,4 +1,18 @@
-from assistant.retrieval.wikipedia import lookup
+from assistant.logic import rules
+from typing import Callable, Optional
+
+Rule = Callable[[str,dict],Optional[str]]
+
+RULES: list[Rule] = [
+    rules.greeting,
+    rules.choose_location,
+    rules.weather,
+    rules.current_time,
+    rules.current_date,
+    rules.capital_question,
+    rules.what_is_who_is
+]
+
 
 def handle(text: str, profile: dict) -> str:
 
@@ -14,13 +28,10 @@ def handle(text: str, profile: dict) -> str:
     """
 
     text = text.lower().strip()
-
-    if text.startswith("what is") or text.startswith("who is"):
-        topic = text.replace("what is","").replace("who is","").strip()
-        return lookup(topic)
     
-    if "capital of" in text:
-        topic = text.split("capital of")[-1].strip()
-        return lookup(f"capital of {topic}")
+    for rule in RULES:
+        result = rule(text,profile)
+        if result:
+            return result
     
     return "I am not sure how to answer that yet."
