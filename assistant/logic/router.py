@@ -1,6 +1,11 @@
 from assistant.logic import rules
 from typing import Callable, Optional
 
+# This is from the basic local LLM
+from assistant.llm.ollama_client import ask_llm
+from assistant.llm.prompt_builder import build_prompt
+from assistant.llm.memory import append_message
+
 Rule = Callable[[str,dict],Optional[str]]
 
 RULES: list[Rule] = [
@@ -12,7 +17,6 @@ RULES: list[Rule] = [
     rules.capital_question,
     rules.what_is_who_is
 ]
-
 
 def handle(text: str, profile: dict) -> str:
 
@@ -29,9 +33,18 @@ def handle(text: str, profile: dict) -> str:
 
     text = text.lower().strip()
     
+    # try rules first
     for rule in RULES:
         result = rule(text,profile)
         if result:
             return result
     
-    return "I am not sure how to answer that yet."
+    # if no rules are matched -> ask the LLM (llama3)
+    prompt = build_prompt(text,profile)
+    response = ask_llm(prompt)
+
+    # update short-term memory
+    append_message("user",text)
+    append_message("assistant",response)
+
+    return response

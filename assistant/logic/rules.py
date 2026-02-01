@@ -3,6 +3,7 @@ from assistant.retrieval.wikipedia import lookup
 from assistant.retrieval.weather import geocode, get_weather_from_coords, format_options, LAST_GEOCODE_RESULTS
 import re
 import random
+import string
 
 def get_owner_name(profile):
     owner = profile.get("owner",{})
@@ -26,7 +27,7 @@ def current_time(text: str, profile:dict):
     return None
 
 def current_date(text: str, profile:dict):
-    if "date" in text or "day" in text:
+    if re.search(r"\b(date|day)\b", text):
         today = datetime.now().strftime("%A, %d %B %Y")
         return f"Today is {today}"
     return None
@@ -40,13 +41,12 @@ def capital_question(text: str, profile:dict):
 
 def what_is_who_is(text: str, profile:dict):
     if text.startswith("what is") or text.startswith("who is"):
-        topic = (
-            text.replace("what is", "")
-            .replace("who is", "")
-            .strip()
-        )
-        return lookup(topic)
-    return None
+        topic = text.replace("what is", "").replace("who is", "").strip()
+        topic = topic.translate(str.maketrans("", "", string.punctuation))
+        result = lookup(topic)
+        if result:
+            return result
+        return None
 
 
 def clean_location(text: str) -> str:
