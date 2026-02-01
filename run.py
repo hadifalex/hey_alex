@@ -2,6 +2,7 @@ import argparse
 import yaml
 
 from assistant.logic.router import handle
+from assistant.audio.stt import listen
 
 def load_profile(name: str)->str:
     """
