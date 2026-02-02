@@ -20,17 +20,22 @@ def load_profile(name: str)->str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile",default="default")
-    args = parser.parse_args()
+    parser.add_argument("--profile",default="default")                                                  # you can load `run.py --profile lachlan` to load with "lachlan's profile"
+    parser.add_argument("--text",action = "store_true",help="Use text input instead of microphone")     # you can load `run.py --text` to be in text mode (rather than listen mode)
+    args = parser.parse_args()                                                                          # stores the arguments of the parser
 
-    profile = load_profile(args.profile)
-    assistant_name = profile.get("name","Assistant")
+    profile = load_profile(args.profile)                        # loads the desired profile
+    assistant_name = profile.get("name","Assistant")            # extract the name of the assistant
 
-    print(f"{assistant_name} is ready. Type your question")
+    print(f"{assistant_name} is ready. Type your question")     # splash-screen question
     print("Type 'exit' to quit.\n")
 
     while True:
-        user_input = input("> ")
+        if args.text:
+            user_input = input("> ")
+        else:
+            user_input = listen()
+            print("You said:",user_input)
 
         if user_input.lower() in ("exit","quit"):
             break
