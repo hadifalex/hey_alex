@@ -10,12 +10,12 @@ class PersistentLLM:
         print(f"[LLM] Connected to Ollama model '{self.model_name}'")
 
     def generate(self, prompt: str, n_memory: int = 20) -> str:
-        context = "\n".join(self.memory[-n_memory:])
-        full_prompt = f"{context}\nUser: {prompt}\nAssistant:"
+        # context = "\n".join(self.memory[-n_memory:])
+        # full_prompt = f"{context}\nUser: {prompt}\nAssistant:"
 
         payload = {
             "model": self.model_name,
-            "messages":[{"role":"user","content":full_prompt}],
+            "messages":[{"role":"user","content":prompt}],
             "stream": False
         }
 
