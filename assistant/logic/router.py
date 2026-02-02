@@ -18,7 +18,7 @@ RULES: list[Rule] = [
     rules.what_is_who_is
 ]
 
-def handle(text: str, profile: dict) -> str:
+def handle(text: str, profile: dict,llm = None) -> str:
 
     """
     Docstring for handle
@@ -41,7 +41,11 @@ def handle(text: str, profile: dict) -> str:
     
     # if no rules are matched -> ask the LLM (llama3)
     prompt = build_prompt(text,profile)
-    response = ask_llm(prompt)
+    if llm is not None:
+        response = llm.generate(prompt)
+    else:
+        print("using ask_llm and NOT llm.generate!")
+        response = ask_llm(prompt)
 
     # update short-term memory
     append_message("user",text)

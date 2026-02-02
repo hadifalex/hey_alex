@@ -3,6 +3,9 @@ import yaml
 
 from assistant.logic.router import handle
 from assistant.audio.stt import listen
+from assistant.llm.ollama_wrapper import PersistentLLM
+
+import time
 
 def load_profile(name: str)->str:
     """
@@ -30,19 +33,30 @@ def main():
     print(f"{assistant_name} is ready. Type your question")     # splash-screen question
     print("Type 'exit' to quit.\n")
 
+    # load the persistent llm
+    llm = PersistentLLM(model_name="llama3")
+    
     while True:
+        start_total = time.time()
+
         if args.text:
             user_input = input("> ")
         else:
+            t0 = time.time()                                # timing to check speed bottlenecks in STT
             user_input = listen()
+            print(f"[TIME] STT: {time.time() - t0:.2f}s")   # for speed bottlenecks in STT
             print("You said:",user_input)
+            print("Thinking...")
 
         if user_input.lower() in ("exit","quit"):
             break
+        
+        t1 = time.time()                                        # timing to check speed bottlenecks in LLM   
+        response = handle(user_input, profile,llm=llm)
+        print(f"[TIME] Router + LLM: {time.time() - t1:.2f}s")  # timing to check speed bottlenecks in LLM
 
-        response = handle(user_input, profile)
         print(f"\n{assistant_name}: {response}\n")
-
+        print(f"[TIME] TOTAL: {time.time() - start_total:.2f}s\n")  # total time
 
 if __name__ == "__main__":
     main()
