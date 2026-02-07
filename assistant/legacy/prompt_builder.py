@@ -1,3 +1,10 @@
+"""
+V1 prompt system (string-based prompting).
+Replaced by chat-message architecture when migrating to Ollama chat API.
+Kept for historical reference.
+"""
+
+
 from assistant.llm.memory import get_recent_history
 
 

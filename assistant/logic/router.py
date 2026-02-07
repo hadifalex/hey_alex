@@ -1,10 +1,6 @@
 from assistant.logic import rules
 from typing import Callable, Optional
 
-# This is from the basic local LLM
-from assistant.llm.ollama_client import ask_llm
-from assistant.llm.prompt_builder import build_prompt
-from assistant.llm.memory import append_message
 
 Rule = Callable[[str,dict],Optional[str]]
 
@@ -34,21 +30,16 @@ def handle(text: str, profile: dict,llm = None) -> str:
     text = text.lower().strip()
     
     # try rules first
-    for rule in RULES:
-        result = rule(text,profile)
-        if result:
-            return result
+    if not profile.get("no_internet",False):
+        for rule in RULES:
+            result = rule(text,profile)
+            if result:
+                return result
     
     # if no rules are matched -> ask the LLM (llama3)
-    prompt = build_prompt(text,profile)
     if llm is not None:
-        response = llm.generate(prompt)
+        response = llm.generate(text, profile)
     else:
-        print("using ask_llm and NOT llm.generate!")
-        response = ask_llm(prompt)
-
-    # update short-term memory
-    append_message("user",text)
-    append_message("assistant",response)
+        raise RuntimeError("No LLM available for fallback")
 
     return response

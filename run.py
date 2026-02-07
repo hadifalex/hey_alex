@@ -1,21 +1,46 @@
-import argparse
+import os
+import sys
+import time
 import yaml
+import argparse
+
+import requests
+import subprocess
 
 from assistant.logic.router import handle
 from assistant.audio.stt import listen
 from assistant.llm.ollama_wrapper import PersistentLLM
 
-import time
+
+
+
+def ensure_ollama_running():
+    try:
+        # check if Ollama server responds
+        requests.get("http://localhost:11434")
+        print("[Ollama] Server already running")
+        return
+    except requests.exceptions.ConnectionError:
+        print("[Ollama] Starting a Session...please wait while I boot up!")
+
+    # find correct binary automatically
+    if sys.platform.startswith("win"):
+        ollama_bin = os.path.join(
+            os.environ["LOCALAPPDATA"],
+            "Programs",
+            "Ollama",
+            "ollama.exe"
+        )
+    else:
+        ollama_bin = "ollama"
+
+    subprocess.Popen([ollama_bin, "serve"])
+    time.sleep(2)
+    print("[Ollama] Server should now be ready")
+
 
 def load_profile(name: str)->str:
-    """
-    Docstring for load_profile
-    
-    :param name: Description
-    :type name: str
-    :return: Description
-    :rtype: str
-    """
+    """Load a YAML profile"""
 
     path = f"profiles/{name}/personality.yaml"
     with open(path, "r") as f:
@@ -33,21 +58,35 @@ def main():
     print(f"{assistant_name} is ready. Type your question")     # splash-screen question
     print("Type 'exit' to quit.\n")
 
+
+    # check that Ollama is running before creating the persistent LLM.
+    ensure_ollama_running()
+    
     # load the persistent llm
-    llm = PersistentLLM(model_name="llama3")
+    llm = PersistentLLM(model_name="llama3",profile=profile)
     
     while True:
-        start_total = time.time()
 
-        if args.text:
+        start_total = time.time()                           # start timing - diagnostic
+
+        # if text mode requested, await for typed result
+        if args.text:                  
             user_input = input("> ")
-        else:
+        
+        # else, default to listening mode
+        else:                          
             t0 = time.time()                                # timing to check speed bottlenecks in STT
-            user_input = listen()
+            user_input = listen()                           # set input to listening
             print(f"[TIME] STT: {time.time() - t0:.2f}s")   # for speed bottlenecks in STT
-            print("You said:",user_input)
-            print("Thinking...")
+            print("You said:",user_input)                   # repeat the input - diagnostic
 
+        # remove silences to avoid using "" as an input
+        if not user_input.strip():
+            continue
+
+        print("Thinking...")
+
+        # break the session if the user wants you to quit.    
         if user_input.lower() in ("exit","quit"):
             break
         

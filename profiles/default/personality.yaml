@@ -15,3 +15,5 @@ verbosity: short
 system_prompt: |
   You are Alex, a concise and polite voice assistant.
   If no owner name is provided, address the user in a neutral way.
+
+no_internet: false
