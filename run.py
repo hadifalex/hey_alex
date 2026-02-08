@@ -11,8 +11,10 @@ import requests
 import subprocess
 
 from assistant.logic.router import handle
-from assistant.audio.stt import listen, init_sst
+from assistant.audio.stt import listen, init_sst        # speech to text (for input)
+from assistant.audio.tts import init_tts, speak         # text to speech (for output)
 from assistant.llm.ollama_wrapper import PersistentLLM
+
 
 
 def ensure_ollama_running(diagnostic_mode = False):
@@ -79,6 +81,8 @@ def main():
     
 
     init_sst(diagnostic_mode)
+    
+    init_tts()
     
     if not diagnostic_mode:
         os.environ["OLLAMA_LOG_LEVEL"] = "error"
@@ -148,6 +152,7 @@ def main():
 
         print(f"\n{assistant_name}: {response}\n")
         print(f"[TIME] TOTAL: {time.time() - start_total:.2f}s\n")  # total time
+        speak(response)
 
 if __name__ == "__main__":
     main()
