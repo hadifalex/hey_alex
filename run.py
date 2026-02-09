@@ -12,7 +12,7 @@ import subprocess
 
 from assistant.logic.router import handle
 from assistant.audio.stt import listen, init_sst        # speech to text (for input)
-from assistant.audio.tts import init_tts, speak         # text to speech (for output)
+from assistant.audio.tts import speak                   # text to speech (for output)
 from assistant.llm.ollama_wrapper import PersistentLLM
 
 
@@ -42,8 +42,8 @@ def ensure_ollama_running(diagnostic_mode = False):
     if not diagnostic_mode:
         env["OLLAMA_LOG_LEVEL"] = "error"
 
-    stdout = None #if diagnostic_mode else subprocess.DEVNULL
-    stderr = None #if diagnostic_mode else subprocess.DEVNULL
+    stdout = None if diagnostic_mode else subprocess.DEVNULL
+    stderr = None if diagnostic_mode else subprocess.DEVNULL
 
     subprocess.Popen(
         [ollama_bin, "serve"],
@@ -52,7 +52,10 @@ def ensure_ollama_running(diagnostic_mode = False):
         env=env)
     
     time.sleep(2)
-    print("[Ollama] Server should now be ready")
+    if diagnostic_mode:
+        print("[Ollama] Server should now be ready (diagnostic mode)")
+    else:
+        print("[Ollama] Server should now be ready")
 
 
 def load_profile(name: str)->str:
@@ -82,7 +85,6 @@ def main():
 
     init_sst(diagnostic_mode)
     
-    init_tts()
     
     if not diagnostic_mode:
         os.environ["OLLAMA_LOG_LEVEL"] = "error"
@@ -103,16 +105,25 @@ def main():
     ensure_ollama_running(diagnostic_mode = diagnostic_mode)
     
     
+    
     # load the persistent llm
     #########################################################################
     llm = PersistentLLM(model_name="llama3",profile=profile)
 
     
+    
     # This autoinitialises and does NOT store in memory.
     #########################################################################
 
     try:
-        llm.generate("Hello!",profile=profile, n_memory=0)  # n_memory=0 if you don't want this in short-term memory
+        greeting = llm.generate("You have just powered on. Greet the user out loud in one short, funny sentence.",
+                     profile=profile,
+                       n_memory=0)  # n_memory=0 if you don't want this in short-term memory
+        
+        print(f"\n{assistant_name}: {greeting}\n")
+        speak(greeting)
+
+
     except Exception as e:
         print(f"[LLM] Warm-up failed: {e}")
     
@@ -146,6 +157,10 @@ def main():
         if user_input.lower() in ("exit","quit"):
             break
         
+
+        #########################################################################
+        #   RESPONSE
+        #########################################################################
         t1 = time.time()                                        # timing to check speed bottlenecks in LLM   
         response = handle(user_input, profile,llm=llm)
         print(f"[TIME] Router + LLM: {time.time() - t1:.2f}s")  # timing to check speed bottlenecks in LLM
