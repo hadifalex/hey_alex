@@ -116,7 +116,7 @@ def main():
     #########################################################################
 
     try:
-        greeting = llm.generate("You have just powered on. Greet the user out loud in one short, funny sentence.",
+        greeting = llm.generate("You have just powered on after being asleep for a while. Greet the user like a slightly confused but cheerful person!",
                      profile=profile,
                        n_memory=0)  # n_memory=0 if you don't want this in short-term memory
         
