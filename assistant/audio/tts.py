@@ -7,6 +7,7 @@ import sounddevice as sd
 from piper import PiperVoice
 from pathlib import Path
 
+import re
 
 
 BASE = Path(__file__).parent / "piper_voices"
@@ -14,8 +15,23 @@ voice_path = BASE/"en_GB-northern_english_male-medium.onnx"
 voice = PiperVoice.load(str(voice_path))                        # this creates the voice.
 
 
-def speak(text:str):
+def apply_pronunciation(text, profile):
+
+    owner = profile.get("owner", {})
+    nicknames = owner.get("nicknames", {})
+
+    for written, spoken in nicknames.items():
+        pattern = r'\b' + re.escape(written) + r'\b'
+        text = re.sub(pattern, spoken, text)
+
+    return text
+
+
+def speak(text:str,profile = None):
     
+    if profile:
+        text = apply_pronunciation(text,profile)
+
     # have piper write a wave data into a file-like object
     wav_buffer = BytesIO()
 

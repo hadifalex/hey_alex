@@ -6,6 +6,7 @@ import sys
 import time
 import yaml
 import argparse
+import random
 
 import requests
 import subprocess
@@ -15,7 +16,14 @@ from assistant.audio.stt import listen, init_sst        # speech to text (for in
 from assistant.audio.tts import speak                   # text to speech (for output)
 from assistant.llm.ollama_wrapper import PersistentLLM
 
-
+def get_random_line(profile, category, default):
+    greetings = profile.get("greetings", {})
+    lines = greetings.get(category, [])
+    
+    if lines:
+        return random.choice(lines)
+    
+    return default
 
 def ensure_ollama_running(diagnostic_mode = False):
     try:
@@ -116,13 +124,13 @@ def main():
     #########################################################################
 
     try:
-        greeting = llm.generate("You have just powered on after being asleep for a while. Greet the user like a slightly confused but cheerful person!",
+        greeting = llm.generate("You have just powered on after being asleep for a while. \
+                                Greet Lacklan like a slightly confused but cheerful person! Keep it short!",
                      profile=profile,
                        n_memory=0)  # n_memory=0 if you don't want this in short-term memory
         
         print(f"\n{assistant_name}: {greeting}\n")
-        speak(greeting)
-
+        speak(greeting, profile)
 
     except Exception as e:
         print(f"[LLM] Warm-up failed: {e}")
@@ -131,8 +139,11 @@ def main():
     #########################################################################
     # The main while loop
     #########################################################################
-    while True:
 
+    sleeping = False
+
+    while True:
+        
         start_total = time.time()                           # start timing - diagnostic
 
         # if text mode requested, await for typed result
@@ -149,25 +160,43 @@ def main():
 
         # remove silences to avoid using "" as an input
         if not user_input.strip():
-            continue
+            continue                            # go to the top of the loop
 
-        print("Thinking...")
+        #########################################################################
+        # RESOLVE SLEEP STATE
+        #########################################################################
+
+        if sleeping:
+            if any(w in user_input.lower() for w in ["hey alex", "alex", "wake up"]):
+                sleeping=False
+                wake_msg = get_random_line(profile,"wake","Hello there!")
+                speak(wake_msg,profile)
+            continue                            # go to the top of the loop
+
+        if any(w in user_input.lower() for w in ["bye","bye bye","goodbye","shut up","be quiet"]):
+            sleeping = True
+            sleep_msg = get_random_line(profile, "sleep", "Bye!")
+            speak(sleep_msg, profile)
+            continue                            # go to the top of the loop
 
         # break the session if the user wants you to quit.    
         if user_input.lower() in ("exit","quit"):
             break
-        
 
+    
         #########################################################################
         #   RESPONSE
         #########################################################################
+
+        print("Thinking...")
+
         t1 = time.time()                                        # timing to check speed bottlenecks in LLM   
         response = handle(user_input, profile,llm=llm)
         print(f"[TIME] Router + LLM: {time.time() - t1:.2f}s")  # timing to check speed bottlenecks in LLM
 
         print(f"\n{assistant_name}: {response}\n")
         print(f"[TIME] TOTAL: {time.time() - start_total:.2f}s\n")  # total time
-        speak(response)
+        speak(response,profile)
 
 if __name__ == "__main__":
     main()
