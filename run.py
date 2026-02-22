@@ -14,7 +14,8 @@ import subprocess
 from assistant.logic.router import handle
 from assistant.audio.stt import listen, init_sst        # speech to text (for input)
 from assistant.audio.tts import speak                   # text to speech (for output)
-from assistant.llm.ollama_wrapper import PersistentLLM
+from assistant.llm.ollama_wrapper import PersistentLLM  # import the Ollama LLM
+from assistant.audio.utils import beep                  # create beep sounds
 
 def get_random_line(profile, category, default):
     greetings = profile.get("greetings", {})
@@ -155,6 +156,7 @@ def main():
             t0 = time.time()                                # timing to check speed bottlenecks in STT
             user_input = listen()                       # set input to listening
 
+            # beep(500, 0.25)                                 # lower tone
             print(f"[TIME] STT: {time.time() - t0:.2f}s")   # for speed bottlenecks in STT
             print("You said:",user_input)                   # repeat the input - diagnostic
 
@@ -169,6 +171,8 @@ def main():
         if sleeping:
             if any(w in user_input.lower() for w in ["hey alex", "alex", "wake up"]):
                 sleeping=False
+                beep(1000, 0.25)                # first beep
+                beep(1300,0.25)                 # second beep
                 wake_msg = get_random_line(profile,"wake","Hello there!")
                 speak(wake_msg,profile)
             continue                            # go to the top of the loop
@@ -177,6 +181,8 @@ def main():
             sleeping = True
             sleep_msg = get_random_line(profile, "sleep", "Bye!")
             speak(sleep_msg, profile)
+            beep(1000, 0.25)                # first beep
+            beep(500,0.25)                 # second beep
             continue                            # go to the top of the loop
 
         # break the session if the user wants you to quit.    
