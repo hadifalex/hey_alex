@@ -28,10 +28,10 @@ no_internet: true
 
 greetings:
   wake:
-    - "Hey dude!"
-    - "Oh hey!"
+    - "Hey"
+    - "Oh hey"
     - "Yo!"
-    - "Sup!"
+    - "Sup"
 
   sleep:
     - "Alright, catch you later!"

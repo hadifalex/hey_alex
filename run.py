@@ -26,6 +26,27 @@ def get_random_line(profile, category, default):
     
     return default
 
+def random_nickname(profile):
+    key = random.choice(list(profile["owner"]["nicknames"].keys()))
+    return profile["owner"]["nicknames"][key]
+
+def replace_name(text,profile):
+    """Replace the main name with one of its nicknames"""
+    name = profile["owner"]["name"]
+    nickname = random_nickname(profile)
+    text = text.replace(name, nickname)
+    return text
+
+def replace_nicknames_tts(text, profile):
+    """
+    Replace canonical names with pronunciation-friendly nicknames for TTS.
+    """
+    nick_dict = profile["owner"]["nicknames"]
+    for canonical, nick in nick_dict.items():
+        text = text.replace(canonical, nick)
+    return text
+
+
 def ensure_ollama_running(diagnostic_mode = False):
     try:
         # check if Ollama server responds
@@ -125,8 +146,8 @@ def main():
     #########################################################################
 
     try:
-        greeting = llm.generate("You have just powered on after being asleep for a while. \
-                                Greet Lacklan like a slightly confused but cheerful person! Keep it short!",
+        greeting = llm.generate(f"You have just powered on after being asleep for a while. \
+                                Greet {profile["owner"]["name"]} like a slightly confused but cheerful person! Keep it short!",
                      profile=profile,
                        n_memory=0)  # n_memory=0 if you don't want this in short-term memory
         
@@ -174,12 +195,15 @@ def main():
                 beep(1000, 0.25)                # first beep
                 beep(1300,0.25)                 # second beep
                 wake_msg = get_random_line(profile,"wake","Hello there!")
-                speak(wake_msg,profile)
+                rnd_nickname = random_nickname(profile)
+                print(wake_msg +" "+ rnd_nickname)
+                speak(wake_msg +" "+ rnd_nickname,profile)
             continue                            # go to the top of the loop
 
         if any(w in user_input.lower() for w in ["bye","bye bye","goodbye","shut up","be quiet"]):
             sleeping = True
             sleep_msg = get_random_line(profile, "sleep", "Bye!")
+            print(sleep_msg)
             speak(sleep_msg, profile)
             beep(1000, 0.25)                # first beep
             beep(500,0.25)                 # second beep
@@ -187,6 +211,11 @@ def main():
 
         # break the session if the user wants you to quit.    
         if user_input.lower() in ("exit","quit"):
+            print("Goodbye!")
+            speak("Goodbye!",profile)
+            beep(1000, 0.25)     # first beep
+            beep(500,0.25)       # second beep
+            beep(500,1)          # third beep
             break
 
     
@@ -198,11 +227,12 @@ def main():
 
         t1 = time.time()                                        # timing to check speed bottlenecks in LLM   
         response = handle(user_input, profile,llm=llm)
+        response = replace_name(response,profile)
         print(f"[TIME] Router + LLM: {time.time() - t1:.2f}s")  # timing to check speed bottlenecks in LLM
 
         print(f"\n{assistant_name}: {response}\n")
         print(f"[TIME] TOTAL: {time.time() - start_total:.2f}s\n")  # total time
-        speak(response,profile)
+        speak(replace_nicknames_tts(response,profile),profile)
 
 if __name__ == "__main__":
     main()
