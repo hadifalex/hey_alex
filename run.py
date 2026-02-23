@@ -20,15 +20,15 @@ from assistant.audio.utils import beep                  # create beep sounds
 def get_random_line(profile, category, default):
     greetings = profile.get("greetings", {})
     lines = greetings.get(category, [])
-    
     if lines:
-        return random.choice(lines)
-    
+        line = random.choice(lines)
+        line = line.replace("{owner_name}", random_nickname(profile))
+        return line
     return default
 
 def random_nickname(profile):
     key = random.choice(list(profile["owner"]["nicknames"].keys()))
-    return profile["owner"]["nicknames"][key]
+    return key
 
 def replace_name(text,profile):
     """Replace the main name with one of its nicknames"""
@@ -195,9 +195,8 @@ def main():
                 beep(1000, 0.25)                # first beep
                 beep(1300,0.25)                 # second beep
                 wake_msg = get_random_line(profile,"wake","Hello there!")
-                rnd_nickname = random_nickname(profile)
-                print(wake_msg +" "+ rnd_nickname)
-                speak(wake_msg +" "+ rnd_nickname,profile)
+                print(wake_msg)
+                speak(replace_nicknames_tts(wake_msg,profile),profile)
             continue                            # go to the top of the loop
 
         if any(w in user_input.lower() for w in ["bye","bye bye","goodbye","shut up","be quiet"]):

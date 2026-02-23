@@ -4,7 +4,7 @@ owner:
   name: Lachlan
   nicknames:
     Lachlan : Lacklan
-    Lachie : Lakie
+    Lachie : La-ky
     Loulou: Loulou
     dude: dude
     bruv: bruv
@@ -28,10 +28,10 @@ no_internet: true
 
 greetings:
   wake:
-    - "Hey"
-    - "Oh hey"
+    - "Hey {owner_name}!"
+    - "Oh hey, {owner_name}!"
     - "Yo!"
-    - "Sup"
+    - "Sup, {owner_name}"
 
   sleep:
     - "Alright, catch you later!"
