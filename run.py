@@ -189,8 +189,12 @@ def main():
         # RESOLVE SLEEP STATE
         #########################################################################
 
+        WAKE_WORDS = profile["commands"]["wake"]
+        SLEEP_WORDS = profile["commands"]["sleep"]
+        QUIT_WORDS = profile["commands"]["quit"]
+
         if sleeping:
-            if any(w in user_input.lower() for w in ["hey alex", "alex", "wake up"]):
+            if any(w in user_input.lower() for w in WAKE_WORDS):
                 sleeping=False
                 beep(1000, 0.25)                # first beep
                 beep(1300,0.25)                 # second beep
@@ -199,7 +203,7 @@ def main():
                 speak(replace_nicknames_tts(wake_msg,profile),profile)
             continue                            # go to the top of the loop
 
-        if any(w in user_input.lower() for w in ["bye","bye bye","goodbye","shut up","be quiet"]):
+        if any(w in user_input.lower() for w in SLEEP_WORDS):
             sleeping = True
             sleep_msg = get_random_line(profile, "sleep", "Bye!")
             print(sleep_msg)
@@ -209,7 +213,7 @@ def main():
             continue                            # go to the top of the loop
 
         # break the session if the user wants you to quit.    
-        if user_input.lower() in ("exit","quit"):
+        if user_input.lower() in QUIT_WORDS:
             print("Goodbye!")
             speak("Goodbye!",profile)
             beep(1000, 0.25)     # first beep
