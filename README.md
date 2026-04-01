@@ -36,3 +36,22 @@ which accepts the following additional arguments
 --text          : to enter text mode only
 --diagnostic    : to have full access to the diagnostic channels from Vosk, Ollama, and GIN.
 
+# Command words
+
+These are commands that allow you to pause, restart, or quit the interaction with "Alex".
+These are currently hardcoded within `main()`.
+They can be either spoken or written (when in pure text mode).
+
+- waking commands (start engaging with user)
+    - "hey Alex"
+    - "Alex"
+    - "wake up"
+- sleeping commands (stay active but stop responding)
+    - "bye"
+    - "bye bye"
+    - "goodbye"
+    - "shut up"
+    - "be quiet"
+- quitting commands (quit the program)
+    - "quit"
+    - "exit"
