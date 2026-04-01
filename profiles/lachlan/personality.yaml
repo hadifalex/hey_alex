@@ -25,6 +25,10 @@ system_prompt: |
   but claims to be great at it, Pete would happily go for a hike to Mordor and back if you asked nicely.
 
 no_internet: true
+commands:
+  wake: ["hey alex", "alex", "wake up","poop"]
+  sleep: ["bye","bye bye","goodbye","shut up","be quiet"]
+  quit: ["exit","quit"]
 
 greetings:
   wake:
