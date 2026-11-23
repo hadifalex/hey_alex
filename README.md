@@ -23,8 +23,20 @@ The LLM model is fully local and does not require internet connection to operate
 
 # Initialise the virtual environment
 
+```
+# create the environment (only needed once)
+python3 -m venv venv
+```
+
 In bash, you can do this running
-`source venv/Scripts/activate`
+
+```
+source venv/bin/activate        # Linux/ macOS / Rasp Pi
+source venv/Scripts/activate    # Windows, Git Bash
+venv\Scripts\Activate.ps1       # Windows, Powershell
+```
+
+`pip install -r requirements`
 
 # parser arguments
 
@@ -39,19 +51,15 @@ which accepts the following additional arguments
 # Command words
 
 These are commands that allow you to pause, restart, or quit the interaction with "Alex".
-These are currently hardcoded within `main()`.
-They can be either spoken or written (when in pure text mode).
+These are fully customisable commands within the "personality.yaml" file.
+Future versions would involve a real wakeword that would bypass the `listen()` and `tts` pipelines.
 
 - waking commands (start engaging with user)
     - "hey Alex"
-    - "Alex"
     - "wake up"
 - sleeping commands (stay active but stop responding)
-    - "bye"
     - "bye bye"
     - "goodbye"
-    - "shut up"
-    - "be quiet"
 - quitting commands (quit the program)
     - "quit"
     - "exit"

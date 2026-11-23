@@ -147,7 +147,7 @@ def main():
 
     try:
         greeting = llm.generate(f"You have just powered on after being asleep for a while. \
-                                Greet {profile["owner"]["name"]} like a slightly confused but cheerful person! Keep it short!",
+                                Greet {profile['owner']['name']} like a slightly confused but cheerful person! Keep it short!",
                      profile=profile,
                        n_memory=0)  # n_memory=0 if you don't want this in short-term memory
         
