@@ -5,10 +5,12 @@ import os
 import sys
 import time
 import yaml
-import argparse
 import random
+import argparse
+from pathlib import Path
 
 import requests
+import threading
 import subprocess
 
 from assistant.logic.router import handle
@@ -16,6 +18,8 @@ from assistant.audio.stt import listen, init_sst        # speech to text (for in
 from assistant.audio.tts import speak                   # text to speech (for output)
 from assistant.llm.ollama_wrapper import PersistentLLM  # import the Ollama LLM
 from assistant.audio.utils import beep                  # create beep sounds
+
+ROOT = Path(__file__).resolve().parent
 
 def get_random_line(profile, category, default):
     greetings = profile.get("greetings", {})
@@ -88,10 +92,9 @@ def ensure_ollama_running(diagnostic_mode = False):
         print("[Ollama] Server should now be ready")
 
 
-def load_profile(name: str)->str:
+def load_profile(name: str) -> dict:
     """Load a YAML profile"""
-
-    path = f"profiles/{name}/personality.yaml"
+    path = ROOT / "profiles" / name / "personality.yaml"
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
@@ -145,17 +148,11 @@ def main():
     # This autoinitialises and does NOT store in memory.
     #########################################################################
 
-    try:
-        greeting = llm.generate(f"You have just powered on after being asleep for a while. \
-                                Greet {profile['owner']['name']} like a slightly confused but cheerful person! Keep it short!",
-                     profile=profile,
-                       n_memory=0)  # n_memory=0 if you don't want this in short-term memory
-        
-        print(f"\n{assistant_name}: {greeting}\n")
-        speak(greeting, profile)
+    threading.Thread(target=llm.warm_up, daemon=True).start()   # load the model in the background
 
-    except Exception as e:
-        print(f"[LLM] Warm-up failed: {e}")
+    greeting = get_random_line(profile, "startup", "Hello there!")
+    print(f"\n{assistant_name}: {greeting}\n")
+    speak(replace_nicknames_tts(greeting, profile), profile)
     
 
     #########################################################################

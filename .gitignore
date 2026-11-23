@@ -23,5 +23,9 @@ models/vosk-model-small-en-us-0.15/*
 !models/.gitkeep
 
 # personality profiles to ignore
-profiles/lachlan/
-profiles/julian/
+profiles/*
+!profiles/default/ # keep this one
+
+# config files
+config/*.yaml
+!config/audio.example.yaml
