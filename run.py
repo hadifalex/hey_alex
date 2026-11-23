@@ -98,6 +98,15 @@ def load_profile(name: str) -> dict:
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
+
+def load_config(name: str) -> dict:
+    """Load config/<name>.yaml (returns {} if the file is missing or empty)"""
+    path = ROOT / "config" / f"{name}.yaml"
+    if not path.exists():
+        return {}
+    with open(path, "r") as f:
+        return yaml.safe_load(f) or {}
+
 def main():
 
     #####################################################################
@@ -141,11 +150,17 @@ def main():
     
     # load the persistent llm
     #########################################################################
-    llm = PersistentLLM(model_name="llama3",profile=profile)
+    llm_config = load_config("llm")
+    llm = PersistentLLM(
+        model_name=llm_config.get("model", "llama3.2:1b"),
+        profile=profile,
+        keep_alive=llm_config.get("keep_alive", "30m"),
+    )
 
     
     
-    # This autoinitialises and does NOT store in memory.
+    # This greets to signify running and then loads the model in the background
+    # Once the model is loaded, it starts normally.
     #########################################################################
 
     threading.Thread(target=llm.warm_up, daemon=True).start()   # load the model in the background
