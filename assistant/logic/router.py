@@ -2,44 +2,53 @@ from assistant.logic import rules
 from typing import Callable, Optional
 
 
-Rule = Callable[[str,dict],Optional[str]]
+Rule = Callable[[str, dict], Optional[str]]
 
-RULES: list[Rule] = [
-    rules.greeting,
-    rules.choose_location,
-    rules.weather,
+# Rules that never touch the network. Always active.
+OFFLINE_RULES: list[Rule] = [
     rules.current_time,
     rules.current_date,
-    rules.capital_question,
-    rules.what_is_who_is
 ]
 
-def handle(text: str, profile: dict,llm = None) -> str:
+# Rules that need the internet (Wikipedia, weather).
+# Only active when the profile does NOT say `no_internet: true`.
+# Order matters: choose_location must come before weather.
+ONLINE_RULES: list[Rule] = [
+    rules.choose_location,
+    rules.weather,
+    rules.capital_question,
+    rules.what_is_who_is,
+]
 
+# rules.greeting is intentionally left out: it bypasses the personality
+# (the LLM should greet in character) and it crashes on dict-style nicknames.
+
+
+def handle(text: str, profile: dict, llm=None) -> str:
     """
-    Docstring for handle
-    
-    :param text: Description
-    :type text: str
-    :param profile: Description
-    :type profile: dict
-    :return: Description
-    :rtype: str
+    Answer `text`: try the rule-based answers first, fall back to the LLM.
+
+    :param text: what the user said or typed
+    :param profile: the loaded personality profile
+    :param llm: the PersistentLLM instance used as fallback
+    :return: the reply, as a string
     """
 
     text = text.lower().strip()
-    
-    # try rules first
-    if not profile.get("no_internet",False):
-        for rule in RULES:
-            result = rule(text,profile)
-            if result:
-                return result
-    
-    # if no rules are matched -> ask the LLM (llama3)
-    if llm is not None:
-        response = llm.generate(text, profile)
+
+    if profile.get("no_internet", False):
+        active_rules = OFFLINE_RULES
     else:
+        active_rules = OFFLINE_RULES + ONLINE_RULES
+
+    # try rules first
+    for rule in active_rules:
+        result = rule(text, profile)
+        if result:
+            return result
+
+    # if no rule matched -> ask the LLM
+    if llm is None:
         raise RuntimeError("No LLM available for fallback")
 
-    return response
+    return llm.generate(text, profile)

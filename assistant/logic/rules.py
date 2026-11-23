@@ -20,16 +20,17 @@ def greeting(text:str, profile:dict):
     
     return None
 
-def current_time(text: str, profile:dict):
-    if "time" in text:
-        now = datetime.now().strftime("%H:%M")
-        return f"The time is {now}"
+TIME_RE = re.compile(r"\b(?:what time is it|what(?:'s| is) the time|tell me the time)\b(?:\s+(?:now|please))?\W*$")
+DATE_RE = re.compile(r"\b(?:what(?:'s| is)(?: the| today's)? date(?: today)?|what day is (?:it|today)(?: today)?|what(?:'s| is) today)\W*$")
+
+def current_time(text: str, profile: dict):
+    if TIME_RE.search(text):
+        return f"The time is {datetime.now().strftime('%H:%M')}"
     return None
 
-def current_date(text: str, profile:dict):
-    if re.search(r"\b(date|day)\b", text):
-        today = datetime.now().strftime("%A, %d %B %Y")
-        return f"Today is {today}"
+def current_date(text: str, profile: dict):
+    if DATE_RE.search(text):
+        return f"Today is {datetime.now().strftime('%A, %d %B %Y')}"
     return None
 
 def capital_question(text: str, profile:dict):
