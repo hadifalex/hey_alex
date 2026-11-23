@@ -152,7 +152,7 @@ def main():
     #########################################################################
     llm_config = load_config("llm")
     llm = PersistentLLM(
-        model_name=llm_config.get("model", "llama3.2:1b"),
+        model_name=llm_config.get("model", "llama3"),
         profile=profile,
         keep_alive=llm_config.get("keep_alive", "30m"),
     )

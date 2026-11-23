@@ -59,13 +59,19 @@ sudo apt install python3-venv libportaudio2
 
 ## 2. Install Ollama and a model
 
-Install Ollama from https://ollama.com (on Linux: `curl -fsSL https://ollama.com/install.sh | sh`), then download a model:
+Install Ollama from https://ollama.com (on Linux: `curl -fsSL https://ollama.com/install.sh | sh`), then download a model. Alex was built for **llama3**, which is the one to use on a normal PC (it is about a 4.7 GB download and needs roughly 6 GB of free RAM or more):
+
+```bash
+ollama pull llama3
+```
+
+On a smaller machine, such as a Raspberry Pi with 2-4 GB of RAM, llama3 won't fit. Use a smaller model instead, for example:
 
 ```bash
 ollama pull llama3.2:1b
 ```
 
-Which model you pick depends on your RAM, see `config/llm.example.yaml`.
+Smaller models are faster and lighter, but less witty. Whichever you pick, put its name in `config/llm.yaml` (step 4); `config/llm.example.yaml` has a guide.
 
 ## 3. Download the speech models
 
@@ -82,7 +88,7 @@ cp config/llm.example.yaml config/llm.yaml
 ```
 
 - `audio.yaml`: which microphone to use (see Troubleshooting).
-- `llm.yaml`: which Ollama model to use.
+- `llm.yaml`: which Ollama model to use (`llama3` on a PC, something smaller on a low-memory machine). If this file is missing, `llama3` is used.
 
 ## 5. Run it
 
