@@ -1,10 +1,18 @@
-beautifulsoup4==4.14.3
-certifi==2026.1.4
-charset-normalizer==3.4.4
-idna==3.11
+# Direct dependencies only; pip works out the rest.
+# After checking everything works, you can pin the unpinned ones to the
+# versions shown by `pip list` for fully reproducible installs.
+
+# Config + talking to the local Ollama server
 PyYAML==6.0.3
 requests==2.32.5
-soupsieve==2.8.1
-typing_extensions==4.15.0
-urllib3==2.6.3
+
+# Speech to text (Vosk) and microphone / speaker access
+vosk
+sounddevice
+numpy
+
+# Text to speech (Piper). The code uses the 1.3+ API (synthesize_wav).
+piper-tts>=1.3
+
+# Imported at startup, but only used when a profile has `no_internet: false`
 wikipedia==1.4.0

@@ -1,1 +1,2 @@
-input_device: 0 # change this accordingly using mic_check.py
+# Step 1: rename this file to audio.yaml
+input_device: 0 # change this accordingly using `python mic_check.py`

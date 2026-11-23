@@ -18,14 +18,14 @@ Thumbs.db
 # Environment variables
 .env
 
-# text to speech models (Vosk)
+# Speech-to-text model (Vosk): downloaded separately, see README
 models/vosk-model-small-en-us-0.15/*
 !models/.gitkeep
 
-# personality profiles to ignore
-profiles/*
-!profiles/default/ # keep this one
-
-# config files
+# Machine-specific config files: copy the *.example.yaml files and edit your copy.
 config/*.yaml
 !config/audio.example.yaml
+
+# personality profiles: only the default is shared.
+profiles/*
+!profiles/default/ # keep this one
