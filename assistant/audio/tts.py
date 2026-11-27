@@ -3,11 +3,12 @@ from io import BytesIO
 import wave
 
 import numpy as np
-import sounddevice as sd
 from piper import PiperVoice
 from pathlib import Path
 
 import re
+
+from assistant.audio.playback import play
 
 
 BASE = Path(__file__).parent / "piper_voices"
@@ -50,10 +51,8 @@ def speak(text:str,profile = None):
     # convert to numpy int16
     audio = np.frombuffer(frames,dtype=np.int16)
 
-    # play it
-
-    sd.play(audio,samplerate=samplerate)
-    sd.wait()
+    # play it (adapts to what the speaker supports; see playback.py)
+    play(audio, samplerate)
 
 
 # if __name__ == "__main__":

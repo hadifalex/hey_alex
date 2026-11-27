@@ -126,7 +126,9 @@ def main():
     
 
     init_sst(diagnostic_mode)
-    
+
+    if not args.text:
+        init_sst(diagnostic_mode)
     
     if not diagnostic_mode:
         os.environ["OLLAMA_LOG_LEVEL"] = "error"
