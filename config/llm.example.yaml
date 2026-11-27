@@ -1,0 +1,18 @@
+# Copy this file to config/llm.yaml and edit your copy.
+#
+# model: the Ollama model Alex thinks with. It must be installed first:
+#     ollama pull <model>
+#
+# Rough guide (bigger = wittier, but slower and hungrier for RAM):
+#   PC with enough memory (roughly 6 GB+ free) : llama3   <- what Alex was built for
+#   Smaller PC / Raspberry Pi, 4-8 GB          : llama3.2:3b (or llama3.2:1b if replies feel slow)
+#   Raspberry Pi, 2 GB                         : qwen2.5:0.5b (or llama3.2:1b, if it fits)
+#
+# llama3 is about a 4.7 GB download. It will not fit on a small Raspberry Pi
+# (it can run on an 8 GB Pi, but slowly).
+
+model: llama3
+
+# How long Ollama keeps the model in RAM while idle. Ollama's own default is
+# 5 minutes, after which the next question waits for a slow reload.
+keep_alive: 30m
