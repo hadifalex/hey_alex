@@ -157,7 +157,7 @@ def main():
         model_name=llm_config.get("model", "llama3"),
         profile=profile,
         keep_alive=llm_config.get("keep_alive", "30m"),
-        options = llm.config.get("options"),
+        options = llm_config.get("options"),
     )
 
     
