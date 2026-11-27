@@ -108,6 +108,12 @@ A profile is a folder in `profiles/` with a `personality.yaml`. It holds the sys
 
 To make one for a new person, copy `profiles/default` to `profiles/<name>`, edit the YAML, and run `python run.py --profile <name>`.
 
+Tips for writing `system_prompt` (they matter more the smaller the model is):
+
+- Keep it short and concrete. Say how long replies should be ("1 or 2 short sentences") and ask for no emojis or stage directions, since they get read out loud.
+- Add an `examples:` list of sample exchanges (`user:` / `assistant:`). Models, especially small ones, pick up a behaviour much better from examples than from rules.
+- Only `system_prompt` and `examples` are sent to the model. Keys such as `style`, `tone` and `verbosity` are not read, so put anything that matters into the prompt itself.
+
 Only `profiles/default` is shared in this repo. Everything else in `profiles/` is ignored by git on purpose, since personal profiles contain notes about real people.
 
 # Command words
