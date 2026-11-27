@@ -7,7 +7,7 @@ class PersistentLLM:
     """Thin wrapper around a local Ollama server that remembers the conversation."""
 
     def __init__(self, model_name="llama3", profile: dict = None,
-                 keep_alive="30m", timeout=180, max_memory=40):
+                 keep_alive="30m", timeout=180, max_memory=40, options: dict = None):
         """
         :param model_name: the Ollama model to use (must already be pulled)
         :param profile: the personality profile (used for the system prompt)
@@ -16,6 +16,7 @@ class PersistentLLM:
                            has to wait for the model to load again (slow on a Pi).
         :param timeout: seconds to wait for an answer before giving up
         :param max_memory: maximum number of messages kept in memory (2 per exchange)
+        :param options: extra Ollama sampling options, e.g. {"temperature": 0.7, "num_predict": 120}
         """
         self.model_name = model_name
         self.url = "http://localhost:11434/api/chat"
@@ -23,10 +24,11 @@ class PersistentLLM:
         self.keep_alive = keep_alive
         self.timeout = timeout
         self.max_memory = max_memory
+        self.options = options or {}
         self.system_prompt = (profile or {}).get("system_prompt", "")
 
         # conversation history: a list of {"role": "user"/"assistant", "content": ...}
-        # (the system prompt is NOT stored here; it is added fresh on every request)
+        # (the system prompt and examples are NOT stored here; they are added fresh on every request)
         self.memory: List[dict] = []
 
         print(f"[LLM] Connected to Ollama model '{self.model_name}'")
@@ -41,6 +43,23 @@ class PersistentLLM:
             )
         except requests.exceptions.RequestException as e:
             print(f"[LLM] Warm-up failed: {e}")
+
+    @staticmethod
+    def _example_messages(profile: dict) -> List[dict]:
+        """
+        Turn the profile's `examples:` list into chat messages. Showing a model a few
+        sample exchanges teaches it the desired behaviour far better than rules alone,
+        especially for small models.
+        """
+        messages = []
+        for example in (profile or {}).get("examples") or []:
+            if not isinstance(example, dict):
+                continue
+            user, assistant = example.get("user"), example.get("assistant")
+            if user and assistant:
+                messages.append({"role": "user", "content": str(user)})
+                messages.append({"role": "assistant", "content": str(assistant)})
+        return messages
 
     def generate(self, user_text: str, profile: dict = None, n_memory: int = 20) -> str:
         """
@@ -59,12 +78,15 @@ class PersistentLLM:
             "model": self.model_name,
             "messages": [
                 {"role": "system", "content": system_prompt},
+                *self._example_messages(profile),
                 *history,
                 {"role": "user", "content": user_text},
             ],
             "stream": False,
             "keep_alive": self.keep_alive,
         }
+        if self.options:
+            payload["options"] = self.options
 
         try:
             r = requests.post(self.url, json=payload, timeout=(5, self.timeout))
