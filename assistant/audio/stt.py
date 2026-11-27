@@ -6,6 +6,10 @@
 #   2. `input_device:` in config/audio.yaml     (index, or part of the device name)
 #   3. the system default input device
 # Run mic_check.py to see the available devices.
+#
+# Sample rate: the Vosk model was trained on 16000 Hz audio, so that is tried first.
+# Some microphones (e.g. many USB ones on a Raspberry Pi) refuse 16000 Hz; for those
+# the microphone's own native rate is used instead, and Vosk resamples internally.
 
 from vosk import SetLogLevel
 SetLogLevel(-1)
@@ -24,12 +28,13 @@ ROOT = Path(__file__).resolve().parents[2]          # repo root (assistant/audio
 MODEL_PATH = ROOT / "models" / "vosk-model-small-en-us-0.15"
 CONFIG_PATH = ROOT / "config" / "audio.yaml"
 
-SAMPLERATE = 16000
-BLOCKSIZE = 4000            # 0.25 s of audio per block
-MAX_UTTERANCE_S = 15        # force a result if end-of-speech is never detected (noisy room)
+PREFERRED_SAMPLERATE = 16000    # what the Vosk model was trained on
+BLOCK_SECONDS = 0.25            # length of each chunk of audio we process
+MAX_UTTERANCE_S = 15            # force a result if end-of-speech is never detected (noisy room)
 
-model = None                # initialised by init_sst()
+model = None                    # initialised by init_sst()
 q = queue.Queue()
+_working_rate = None            # remembered after the first successful open
 
 
 def _input_device():
@@ -89,29 +94,61 @@ def _drain_queue():
         pass
 
 
+def _open_stream(device):
+    """
+    Open the microphone, at 16000 Hz if it allows it, otherwise at its native rate.
+    Returns (stream, samplerate).
+    """
+    global _working_rate
+
+    if _working_rate is not None:
+        rates = [_working_rate]
+    else:
+        rates = [PREFERRED_SAMPLERATE]
+        try:
+            native = int(sd.query_devices(device, "input")["default_samplerate"])
+            if native != PREFERRED_SAMPLERATE:
+                rates.append(native)
+        except Exception:
+            pass
+
+    errors = []
+    for rate in rates:
+        try:
+            stream = sd.RawInputStream(
+                samplerate=rate,
+                blocksize=int(rate * BLOCK_SECONDS),
+                dtype="int16",
+                channels=1,
+                device=device,
+                callback=callback,
+            )
+        except Exception as e:
+            errors.append(f"  {rate} Hz: {e}")
+            continue
+
+        if rate != PREFERRED_SAMPLERATE and _working_rate is None:
+            print(f"[STT] This microphone doesn't support {PREFERRED_SAMPLERATE} Hz; "
+                  f"using its native {rate} Hz instead (Vosk resamples).")
+        _working_rate = rate
+        return stream, rate
+
+    _working_rate = None    # re-probe next time (e.g. the mic was unplugged)
+    raise RuntimeError(
+        f"Could not open the microphone (device={device!r}):\n" + "\n".join(errors) +
+        "\nRun mic_check.py to list the devices, then set input_device in config/audio.yaml."
+    )
+
+
 def listen() -> str:
     """Capture audio and return the recognised text ('' if nothing was understood)."""
     if model is None:
         raise RuntimeError("STT model not initialised. Call init_sst() first.")
 
-    rec = KaldiRecognizer(model, SAMPLERATE)
     device = _input_device()
     _drain_queue()
-
-    try:
-        stream = sd.RawInputStream(
-            samplerate=SAMPLERATE,
-            blocksize=BLOCKSIZE,
-            dtype="int16",
-            channels=1,
-            device=device,
-            callback=callback,
-        )
-    except Exception as e:
-        raise RuntimeError(
-            f"Could not open the microphone (device={device!r}): {e}\n"
-            "Run mic_check.py to list the devices, then set input_device in config/audio.yaml."
-        ) from e
+    stream, rate = _open_stream(device)
+    rec = KaldiRecognizer(model, rate)
 
     with stream:
         print("Listening...")
